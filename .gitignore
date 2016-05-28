@@ -1,0 +1,6 @@
+*.pyc
+*.pyo
+*.zip
+.DS_Store
+.coverage
+
