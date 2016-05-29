@@ -57,5 +57,8 @@
 
 	* Be careful with timezone!
 
+- Deploy:
+	If you want, I can deploy on any server using fabric.
+	
 - Developer: Dan Thomas
 
