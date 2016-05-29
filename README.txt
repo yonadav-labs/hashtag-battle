@@ -42,18 +42,20 @@
 
 		You can also use curl or httpie to check RESTful APIs
 			Retrieve all battles:
-				curl -H "Accept: application/json" -H "Content-type: application/json" -X GET http://localhost/battle/|json_pp
+				curl -H "Accept: application/json" -H "Content-type: application/json" -X GET http://localhost:8000/battle/|json_pp
 			Retrieve specific battle:
-				curl -H "Accept: application/json" -H "Content-type: application/json" -X GET http://localhost/battle/1/|json_pp
+				curl -H "Accept: application/json" -H "Content-type: application/json" -X GET http://localhost:8000/battle/1/|json_pp
 			Create a battle:
-				curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -u root:newfirst -d '{"name":"REST test battle", "tag1":"happy", "tag2": "car", "start_time":"2016-05-30 12:20:33", "end_time":"2016-05-31 02:26:33"}' http://localhost/battle/|json_pp
+				curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -u root:newfirst -d '{"name":"REST test battle", "tag1":"happy", "tag2": "car", "start_time":"2016-05-30 12:20:33", "end_time":"2016-05-31 02:26:33"}' http://localhost:8000/battle/|json_pp
 			Delete a battle:
-				curl -H "Accept: application/json" -H "Content-type: application/json" -X DELETE -u root:newfirst http://localhost/battle/4/|json_pp
+				curl -H "Accept: application/json" -H "Content-type: application/json" -X DELETE -u root:newfirst http://localhost:8000/battle/4/|json_pp
 
 		* Now it is using username/password credential for authentication. If you want token authentication is also possible.
 		* I allowed only GET, POST, HEAD, DELETE methods after analysing the project. (If you want, I can implement all.)
 		* json_pp is just for formatting JSON.
 		* In Retrieval and deletion use appropriate battle id in url.
+
+	* Be careful with timezone!
 
 - Developer: Dan Thomas
 

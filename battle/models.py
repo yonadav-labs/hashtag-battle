@@ -39,17 +39,24 @@ class Battle(models.Model):
 	start_time = models.DateTimeField(help_text='Format: YYYY-MM-DD hh:mm:ss')
 	end_time = models.DateTimeField(help_text='Format: YYYY-MM-DD hh:mm:ss')
 	status = models.CharField(choices=STATUS, default='Initiated', max_length=20, help_text='')
-	# compare = models.CharField(choices=COMPARE_TYPE, default='Number of typos', max_length=50)
+	compare = models.CharField(choices=COMPARE_TYPE, default='Number of typos', max_length=50)
+	winner = models.CharField(max_length=250, null=True, blank=True)
+
 
 	def __str__(self):
 		return self.name
 
 	def save(self, **kwargs):
-		super(Battle, self).save()  
-		# run thread to get the result of the battle
-		work_thread = Thread(target = do_battle, args = (self.id, ))
-		work_thread.start()		
-		print '@@@@@@@ : do_battle is called - ', self.name
+		is_new = self.pk is None
+		super(Battle, self).save() 
+
+		if is_new: 
+			print '===== Battle Daemon: "%s"-%d Created =====' % (self.name, self.id)
+			# run thread to get the result of the battle
+			work_thread = Thread(target = do_battle, args = (self.id, ))
+			work_thread.setDaemon(True)
+			work_thread.start()		
+			
 
 
 auth = tweepy.OAuthHandler(settings.OAUTH_KEYS['consumer_key'], settings.OAUTH_KEYS['consumer_secret'])
@@ -93,21 +100,51 @@ class PronounFilter(Filter):
 
 def do_battle(battle_id):
 	try:
-		battle = Battle.objects.get(id=battle_id)
-		print battle.start_time, '@@@@@@@@@2'
 		while(1):
+			battle = Battle.objects.get(id=battle_id)
+			print battle.start_time, '@@@@@@@@@'
 			if battle.start_time < timezone.now() and battle.status != 'Started':
 				battle.status = 'Started'
 				battle.save()
-				print 'Started ##########'
+				print '===== Battle: "%s" Started =====' % battle.name
 			elif battle.end_time < timezone.now():
 				battle.status = 'Finished'
 				battle.save()
+				print '===== Battle: "%s" Finished =====' % battle.name
 				break
 
 			if battle.status == 'Started':
-				battle.num_typo1, battle.avg_length1, battle.frequency1 = get_data(battle.tag1)
-				battle.num_typo2, battle.avg_length2, battle.frequency2 = get_data(battle.tag2)
+				# for the first time
+				if battle.avg_length1 == 0:
+					battle.num_typo1, battle.avg_length1, battle.frequency1 = get_data(battle.tag1)
+					battle.num_typo2, battle.avg_length2, battle.frequency2 = get_data(battle.tag2)
+				else:
+					num_typo, avg_length, frequency = get_data(battle.tag1)
+					battle.num_typo1 += num_typo
+					battle.avg_length1 += avg_length
+					battle.frequency1 += frequency
+					battle.avg_length1 /= 2
+					battle.frequency1 /= 2
+
+					num_typo, avg_length, frequency = get_data(battle.tag2)
+					battle.num_typo2 += num_typo
+					battle.avg_length2 += avg_length
+					battle.frequency2 += frequency
+					battle.avg_length2 /= 2
+					battle.frequency2 /= 2
+				if battle.compare == 'Number of typos':
+					battle.winner = battle.tag1
+					if battle.num_typo1 > battle.num_typo2:
+						battle.winner = battle.tag2
+				elif battle.compare == 'Length of tweets':
+					battle.winner = battle.tag1
+					if battle.avg_length1 < battle.avg_length2:
+						battle.winner = battle.tag2
+				else:
+					battle.winner = battle.tag1
+					if battle.frequency1 < battle.frequency2:
+						battle.winner = battle.tag2
+
 				battle.save()
 
 			sleep(INTERVAL)			
